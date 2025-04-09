@@ -1,0 +1,61 @@
+# Define required providers
+terraform {
+  required_providers {
+    openstack = {
+      source  = "terraform-provider-openstack/openstack"
+      version = "1.44.0"
+    }
+  }
+}
+# Configure the OpenStack Provider
+provider "openstack" {
+  auth_url    = "https://api.pub1.infomaniak.cloud/identity"
+  region      = "dc4-a"
+  user_name   = "PCU-6ZAEU4S" # TODO: changeme
+  tenant_name = "PCP-6ZAEU4S" # TODO: changeme
+  password    = "Zoltraackmelio+2600" # TODO: changeme
+}
+# Create a web security group
+resource "openstack_compute_secgroup_v2" "web_server" {
+  name        = "web_server"
+  description = "Security Group Description"
+
+  rule {
+    from_port   = 22
+    to_port     = 22
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 80
+    to_port     = 80
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 443
+    to_port     = 443
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}
+
+
+# Create a web server
+resource "openstack_compute_instance_v2" "web-server" {
+  name            = "web-server"
+  image_id        = "a0c44881-50cc-4c9d-9753-89206cff776d"
+  flavor_name     = "a1-ram2-disk20-perf1"
+  key_pair        = "test"
+  security_groups = ["web_server"]
+
+  metadata = {
+    application = "web-app"
+  }
+
+  network {
+    name = "ext-net1"
+  }
+}

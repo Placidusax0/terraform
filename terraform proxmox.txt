@@ -1,0 +1,52 @@
+terraform {
+  required_providers {
+    proxmox = {
+      source  = "bpg/proxmox"
+      version = "0.42.0"
+    }
+  }
+}
+
+provider "proxmox" {
+  endpoint   = "https://192.168.100.200:8006/"
+  api_token  = var.api_token
+  insecure   = false
+
+  ssh {
+    agent    = true
+    username = "root"
+  }
+}
+
+resource "proxmox_vm_qemu" "ubuntu" {
+  name        = "ubuntu"
+  desc        = "VM Ubuntu provisionnÃ©e avec Terraform"
+  target_node = "pve"
+  clone       = "ubuntu-template"
+
+  os_type = "cloud-init"
+  cores   = 2
+  sockets = 1
+  memory  = 2048
+  scsihw  = "virtio-scsi-pci"
+
+  disk {
+    type    = "scsi"
+    storage = "local-lvm"
+    size    = "8G"
+  }
+
+  network {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  ipconfig0 = "ip=dhcp"
+
+  sshkeys = file("~/.ssh/id_rsa.pub")
+
+  ciuser     = "terraform"
+  cipassword = "p@ssw0rd"
+
+  agent = 1
+}
